@@ -19,7 +19,12 @@ module.exports = {
         .setRequired(true))
     .addChannelOption(option =>
       option.setName('logchannel')
-        .setDescription('Channel for logging boosts')
+        .setDescription('Channel for logging boost events')
+        .addChannelTypes(ChannelType.GuildText)
+        .setRequired(true))
+    .addChannelOption(option =>
+      option.setName('boostlistchannel')
+        .setDescription('Channel to post and update the booster list')
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(true)),
 
@@ -27,6 +32,7 @@ module.exports = {
     const boosterRole = interaction.options.getRole('boosterrole');
     const announceChannel = interaction.options.getChannel('announcechannel');
     const logChannel = interaction.options.getChannel('logchannel');
+    const listChannel = interaction.options.getChannel('boostlistchannel');
 
     let configs = {};
     try {
@@ -41,10 +47,16 @@ module.exports = {
     configs[interaction.guildId] = {
       boosterRoleId: boosterRole.id,
       announceChannelId: announceChannel.id,
-      logChannelId: logChannel.id
+      logChannelId: logChannel.id,
+      boostListChannelId: listChannel.id
     };
 
-    fs.writeFileSync(configPath, JSON.stringify(configs, null, 2));
-    return interaction.reply({ content: '✅ BoostBuddy Pro has been set up successfully!', ephemeral: true });
+    try {
+      fs.writeFileSync(configPath, JSON.stringify(configs, null, 2));
+      await interaction.reply({ content: '✅ BoostBuddy Pro has been set up successfully for this server!', ephemeral: true });
+    } catch (err) {
+      console.error("Failed to save config:", err);
+      await interaction.reply({ content: '❌ Failed to save the setup. Please try again.', ephemeral: true });
+    }
   }
 };
